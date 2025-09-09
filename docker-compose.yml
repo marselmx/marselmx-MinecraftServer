@@ -1,0 +1,40 @@
+version: "3.8"
+
+services: MinecraftServer
+  manager:
+    build:
+      context: ./Manager
+      dockerfile: Dockerfile
+    container_name: service
+    ports:
+      - "5000:5000"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+    volumes:
+      - ./data:/app/data
+      - ./resources:/app/resources
+      - ./docker-compose.yml:/app/compose.yml:ro
+    depends_on:
+      - minecraft
+      
+  minecraft:
+    image: itzg/minecraft-server:java17
+    container_name: minecraft-server
+    ports:
+      - "25565:25565"
+      - "24454:24454/udp"
+      - "25575:25575"
+    environment:
+      EULA: "TRUE"
+      TYPE: "CURSEFORGE"
+      CF_SERVER_MOD: "/resources/SM3 Server Pack - v22.zip"
+      CF_BASE_DIR: "/data"
+      MEMORY: "6G"
+      MODS: |
+        /resources/voicechat-forge-1.19.2-2.6.2.jar
+      RCON_PASSWORD: "changeme"
+      RCON_PORT: "25575"
+    volumes:
+      - ./data:/data
+      - ./resources:/resources:ro
+    restart: unless-stopped

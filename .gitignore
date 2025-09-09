@@ -1,0 +1,25 @@
+# Minecraft
+/data/
+backups/
+
+# Logs
+logs/
+*.log
+
+# Build results
+bin/
+obj/
+
+# JetBrains
+.vscode/
+.idea/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Docker
+*.env
