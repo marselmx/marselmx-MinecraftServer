@@ -12,6 +12,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
 	<PackageReference Include="Telegram.Bot" Version="18.0.0" />
+	<PackageReference Include="CoreRCON" Version="5.2.3" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
 </Project>

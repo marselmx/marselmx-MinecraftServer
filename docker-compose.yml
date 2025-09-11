@@ -1,21 +1,47 @@
 version: "3.8"
 
-services: MinecraftServer
+networks:
+  minecraft-network:
+    driver: bridge
+
+volumes:
+  minecraft-data:
+  backup-data:
+
+services:
   manager:
     build:
       context: ./Manager
       dockerfile: Dockerfile
-    container_name: service
+    container_name: minecraft-manager
     ports:
-      - "5000:5000"
+      - "5000:8080"  # Исправлен порт: внешний 5000 -> внутренний 8080
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      # Настройки для backup сервиса
+      MINECRAFT_RCON_HOST: "minecraft-server"
+      MINECRAFT_RCON_PORT: "25575"
+      MINECRAFT_RCON_PASSWORD: "changeme123"  # Изменен пароль по умолчанию
+      BACKUP_INTERVAL_MINUTES: "30"
+      BACKUP_RETENTION_DAYS: "7"
     volumes:
-      - ./data:/app/data
-      - ./resources:/app/resources
+      - minecraft-data:/app/data
+      - ./resources:/app/resources:ro
       - ./docker-compose.yml:/app/compose.yml:ro
+      - backup-data:/app/backups
     depends_on:
-      - minecraft
+      minecraft:
+        condition: service_healthy
+    networks:
+      - minecraft-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
       
   minecraft:
     image: itzg/minecraft-server:java17
@@ -32,9 +58,66 @@ services: MinecraftServer
       MEMORY: "6G"
       MODS: |
         /resources/voicechat-forge-1.19.2-2.6.2.jar
-      RCON_PASSWORD: "changeme"
+      RCON_PASSWORD: "changeme123"  # Изменен пароль (тот же что в manager)
       RCON_PORT: "25575"
+      # Дополнительные настройки для лучшей работы
+      ENABLE_RCON: "true"
+      BROADCAST_RCON_TO_OPS: "true"
+      MAX_PLAYERS: "20"
+      DIFFICULTY: "normal"
+      ALLOW_NETHER: "true"
+      ANNOUNCE_PLAYER_ACHIEVEMENTS: "true"
+      ENABLE_COMMAND_BLOCK: "true"
+      FORCE_GAMEMODE: "false"
+      GENERATE_STRUCTURES: "true"
+      HARDCORE: "false"
+      MAX_BUILD_HEIGHT: "256"
+      MAX_WORLD_SIZE: "29999984"
+      PVP: "true"
+      SPAWN_ANIMALS: "true"
+      SPAWN_MONSTERS: "true"
+      SPAWN_NPCS: "true"
+      VIEW_DISTANCE: "10"
     volumes:
-      - ./data:/data
+      - minecraft-data:/data
       - ./resources:/resources:ro
+    networks:
+      - minecraft-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mc-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  backup:
+    build:
+      context: ./Backup
+      dockerfile: Dockerfile
+    container_name: minecraft-backup
+    environment:
+      MINECRAFT_DATA_PATH: "/minecraft-data"
+      BACKUP_PATH: "/backups"
+      BACKUP_INTERVAL_MINUTES: "30"
+      BACKUP_RETENTION_DAYS: "7"
+      RCON_HOST: "minecraft-server"
+      RCON_PORT: "25575"
+      RCON_PASSWORD: "changeme123"
+      MANAGER_API_URL: "http://minecraft-manager:8080"
+    volumes:
+      - minecraft-data:/minecraft-data:ro
+      - backup-data:/backups
+    depends_on:
+      minecraft:
+        condition: service_healthy
+      manager:
+        condition: service_healthy
+    networks:
+      - minecraft-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "backup_script"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
