@@ -7,8 +7,8 @@ volumes:
 services:
   manager:
     build:
-      context: ./Manager
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Manager/Dockerfile
     container_name: minecraft-manager
     ports:
       - "5000:8080"
@@ -47,8 +47,8 @@ services:
       # Additional settings for better performance
       ENABLE_RCON: "true"
       BROADCAST_RCON_TO_OPS: "true"
-      MAX_PLAYERS: "20"
-      DIFFICULTY: "normal"
+      MAX_PLAYERS: "4"
+      DIFFICULTY: "hard"
       ALLOW_NETHER: "true"
       ANNOUNCE_PLAYER_ACHIEVEMENTS: "true"
       ENABLE_COMMAND_BLOCK: "true"
