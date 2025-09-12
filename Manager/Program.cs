@@ -16,8 +16,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors();
+
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Health check endpoint
+app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
+
+// Root endpoint
+app.MapGet("/", () => "Minecraft Server Manager API is running!");
 
 app.Run();

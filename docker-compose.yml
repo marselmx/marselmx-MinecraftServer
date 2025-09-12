@@ -19,9 +19,9 @@ services:
       RCON_PASSWORD: "${RCON_PASSWORD}"
       MC_DATA_DIR: "/data"
     volumes:
-      - minecraft-data:/app/data
+      - minecraft-data:/data
       - ./resources:/app/resources:ro
-      - backup-data:/app/compose.yml:ro
+      - backup-data:/app/backups
     depends_on:
       minecraft:
         condition: service_healthy
@@ -32,7 +32,7 @@ services:
     container_name: minecraft-server
     ports:
       - "25565:25565" # Minecraft
-      - "24454:24454/udp"
+      - "24454:24454/udp" # VoiceChat
       - "25575:25575" # RCON
     environment:
       EULA: "TRUE"
