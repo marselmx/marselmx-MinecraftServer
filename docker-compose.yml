@@ -1,29 +1,39 @@
 version: "3.8"
 
-services: MinecraftServer
+volumes:
+  minecraft-data:
+  backup-data:
+
+services:
   manager:
     build:
       context: ./Manager
       dockerfile: Dockerfile
-    container_name: service
+    container_name: minecraft-manager
     ports:
-      - "5000:5000"
+      - "5000:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
+      RCON_HOST: minecraft-server
+      RCON_PORT: "25575"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      MC_DATA_DIR: "/data"
     volumes:
-      - ./data:/app/data
-      - ./resources:/app/resources
-      - ./docker-compose.yml:/app/compose.yml:ro
+      - minecraft-data:/app/data
+      - ./resources:/app/resources:ro
+      - backup-data:/app/compose.yml:ro
     depends_on:
-      - minecraft
+      minecraft:
+        condition: service_healthy
+    restart: unless-stopped
       
   minecraft:
     image: itzg/minecraft-server:java17
     container_name: minecraft-server
     ports:
-      - "25565:25565"
+      - "25565:25565" # Minecraft
       - "24454:24454/udp"
-      - "25575:25575"
+      - "25575:25575" # RCON
     environment:
       EULA: "TRUE"
       TYPE: "CURSEFORGE"
@@ -32,9 +42,33 @@ services: MinecraftServer
       MEMORY: "6G"
       MODS: |
         /resources/voicechat-forge-1.19.2-2.6.2.jar
-      RCON_PASSWORD: "changeme"
+      RCON_PASSWORD: "${RCON_PASSWORD}"
       RCON_PORT: "25575"
+      # Additional settings for better performance
+      ENABLE_RCON: "true"
+      BROADCAST_RCON_TO_OPS: "true"
+      MAX_PLAYERS: "20"
+      DIFFICULTY: "normal"
+      ALLOW_NETHER: "true"
+      ANNOUNCE_PLAYER_ACHIEVEMENTS: "true"
+      ENABLE_COMMAND_BLOCK: "true"
+      FORCE_GAMEMODE: "false"
+      GENERATE_STRUCTURES: "true"
+      HARDCORE: "false"
+      MAX_BUILD_HEIGHT: "256"
+      MAX_WORLD_SIZE: "29999984"
+      PVP: "true"
+      SPAWN_ANIMALS: "true"
+      SPAWN_MONSTERS: "true"
+      SPAWN_NPCS: "true"
+      VIEW_DISTANCE: "10"
     volumes:
-      - ./data:/data
+      - minecraft-data:/data
       - ./resources:/resources:ro
+    healthcheck:
+      test: ["CMD", "mc-monitor", "status", "--host", "localhost", "--port", "25565"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
     restart: unless-stopped
