@@ -36,12 +36,11 @@ services:
       - "25575:25575" # RCON
     environment:
       EULA: "TRUE"
-      TYPE: "AUTO_CURSEFORGE"
+      TYPE: "CURSEFORGE"
       # https://www.curseforge.com/minecraft/modpacks/strictly-medieval-3-forge/files/5778153
-      CF_API_KEY: "${CF_API_KEY}"
-      CF_MODPACK_SLUG: "strictly-medieval-3-forge"
-      CF_MODPACK_FILE_ID: "5778153"
-      MEMORY: "12G"
+      CF_SERVER_MOD: "/resources/SM3 Server Pack - v22.zip"
+      CF_BASE_DIR: "/data"
+      MEMORY: "16G"
       VERSION: "1.19.2"
       MODS: |
         /resources/voicechat-forge-1.19.2-2.6.2.jar
